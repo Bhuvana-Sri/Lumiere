@@ -1,0 +1,42 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-cream-50 text-charcoal-700 font-sans font-light antialiased;
+    font-feature-settings: 'kern' 1, 'liga' 1;
+  }
+  ::selection {
+    @apply bg-sage-200 text-charcoal-700;
+  }
+}
+
+@layer components {
+  .smalcap {
+    @apply text-[11px] font-medium tracking-widest uppercase text-charcoal-400;
+  }
+  .serif-h {
+    @apply font-serif font-normal leading-[1.05] tracking-tight;
+  }
+  .pill-btn {
+    @apply inline-block bg-charcoal-700 text-cream-100 px-5 py-3 text-[11px] font-medium tracking-widest uppercase transition-colors hover:bg-charcoal-500 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap;
+  }
+  .pill-btn-outline {
+    @apply inline-block border border-charcoal-700 text-charcoal-700 px-5 py-3 text-[11px] font-medium tracking-widest uppercase transition-colors hover:bg-charcoal-700 hover:text-cream-100 whitespace-nowrap;
+  }
+  .link-cta {
+    @apply inline-block border-b border-charcoal-700 pb-1 text-[11px] font-medium tracking-widest uppercase transition-colors hover:text-sage-600 hover:border-sage-600;
+  }
+  .input {
+    @apply w-full bg-transparent border-b border-charcoal-700/30 py-3 text-[15px] focus:outline-none focus:border-sage-600 transition-colors placeholder:text-charcoal-400;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
