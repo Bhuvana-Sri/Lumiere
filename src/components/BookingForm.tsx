@@ -72,7 +72,42 @@ export function BookingForm() {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Checkout failed');
-      window.location.href = json.url;
+
+      // Wait for Razorpay script to load (max 5 seconds)
+      let Razorpay = (window as any).Razorpay;
+      let attempts = 0;
+      while (!Razorpay && attempts < 50) {
+        await new Promise(r => setTimeout(r, 100));
+        Razorpay = (window as any).Razorpay;
+        attempts++;
+      }
+
+      if (!Razorpay) {
+        throw new Error('Razorpay payment gateway is not available. Please refresh and try again.');
+      }
+
+      // Open Razorpay checkout modal
+      const options = {
+        key: json.keyId,
+        order_id: json.orderId,
+        name: 'Lumière',
+        description: `${state.treatment.name} - Booking Deposit`,
+        prefill: {
+          name: json.clientName,
+          email: json.clientEmail,
+          contact: json.clientPhone
+        },
+        handler: function(response: any) {
+          window.location.href = `/book/success?payment_id=${response.razorpay_payment_id}&order_id=${json.orderId}`;
+        },
+        onClose: function() {
+          setSubmitting(false);
+          setError('Payment cancelled. You can try again anytime.');
+        }
+      };
+
+      const instance = new Razorpay(options);
+      instance.open();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong');
       setSubmitting(false);
@@ -301,7 +336,7 @@ export function BookingForm() {
               </button>
             </div>
             <p className="mt-4 text-[12px] text-charcoal-400 text-right">
-              Secure payment by Stripe. Cards, UPI, and netbanking accepted.
+              Secure payment by Razorpay. Cards, UPI, and netbanking accepted.
             </p>
           </motion.div>
         )}

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { stripe } from '@/lib/stripe';
+import crypto from 'crypto';
+import { razorpay } from '@/lib/razorpay';
 import { getTreatment } from '@/lib/treatments';
 
 const bookingSchema = z.object({
   treatmentSlug: z.string().min(1),
-  appointmentAt: z.string().datetime(), // ISO
+  appointmentAt: z.string().datetime(),
   clientName: z.string().min(2).max(100),
   clientEmail: z.string().email(),
   clientPhone: z.string().min(7).max(20),
@@ -22,47 +23,68 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unknown treatment' }, { status: 400 });
     }
 
-    const origin =
-      req.headers.get('origin') ||
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      'http://localhost:3000';
+    if (!razorpay.keyId || razorpay.keyId.includes('placeholder')) {
+      console.error('[checkout] Razorpay credentials not configured');
+      return NextResponse.json(
+        { error: 'Payment not configured. Please add RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET to .env.local' },
+        { status: 500 }
+      );
+    }
 
-    const session = await stripe.checkout.sessions.create({
-      mode: 'payment',
-      payment_method_types: ['card'],
-      customer_email: data.clientEmail,
-      line_items: [
-        {
-          price_data: {
-            currency: 'inr',
-            product_data: {
-              name: `${treatment.name} — refundable booking deposit`,
-              description: `Deposit for your appointment at Lumière. The deposit is deducted from your final treatment cost.`
-            },
-            unit_amount: treatment.depositInr * 100 // Stripe expects paise
-          },
-          quantity: 1
+    const auth = Buffer.from(`${razorpay.keyId}:${razorpay.keySecret}`).toString('base64');
+
+    // Create Razorpay order
+    const orderResponse = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${auth}`
+      },
+      body: JSON.stringify({
+        amount: treatment.depositInr * 100,
+        currency: 'INR',
+        receipt: `booking-${Date.now()}`,
+        notes: {
+          treatmentSlug: data.treatmentSlug,
+          treatmentName: treatment.name,
+          appointmentAt: data.appointmentAt,
+          clientName: data.clientName,
+          clientEmail: data.clientEmail,
+          clientPhone: data.clientPhone,
+          notes: data.notes ?? '',
+          depositInr: String(treatment.depositInr)
         }
-      ],
-      success_url: `${origin}/book/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/book?cancelled=1&treatment=${treatment.slug}`,
-      // The webhook reads these to create the booking record post-payment
-      metadata: {
-        treatmentSlug: data.treatmentSlug,
-        treatmentName: treatment.name,
-        appointmentAt: data.appointmentAt,
-        clientName: data.clientName,
-        clientPhone: data.clientPhone,
-        notes: data.notes ?? '',
-        depositInr: String(treatment.depositInr)
-      }
+      })
     });
 
-    return NextResponse.json({ url: session.url });
+    if (!orderResponse.ok) {
+      const error = await orderResponse.json();
+      console.error('[checkout] Razorpay error:', error);
+      return NextResponse.json(
+        { error: error.error?.description || 'Payment initiation failed' },
+        { status: 500 }
+      );
+    }
+
+    const order = await orderResponse.json();
+    const origin = req.headers.get('origin') || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+    // Create subscription for hosted checkout (using Razorpay's payment links or direct checkout)
+    // For simplicity, return order details for client-side handling
+    return NextResponse.json({
+      success: true,
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: razorpay.keyId,
+      clientName: data.clientName,
+      clientEmail: data.clientEmail,
+      clientPhone: data.clientPhone
+    });
   } catch (error) {
     console.error('[checkout] error', error);
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid form data', issues: error.issues }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid form data' }, { status: 400 });
     }
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Checkout failed' },

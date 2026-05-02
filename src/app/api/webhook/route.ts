@@ -1,78 +1,80 @@
 import { NextRequest, NextResponse } from 'next/server';
-import type Stripe from 'stripe';
-import { stripe } from '@/lib/stripe';
+import { verifyWebhookSignature, razorpay } from '@/lib/razorpay';
 import { getAdminSupabase } from '@/lib/supabase';
 import { sendBookingConfirmation } from '@/lib/email';
 
-// Stripe webhooks must use the raw request body (not parsed JSON) to verify the signature
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
-  const sig = req.headers.get('stripe-signature');
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  const signature = req.headers.get('x-razorpay-signature');
+  const secret = razorpay.keySecret;
 
-  if (!sig || !secret) {
+  if (!signature || !secret) {
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 400 });
   }
 
-  let event: Stripe.Event;
   try {
     const rawBody = await req.text();
-    event = stripe.webhooks.constructEvent(rawBody, sig, secret);
-  } catch (err) {
-    console.error('[webhook] signature verification failed', err);
-    return NextResponse.json(
-      { error: 'Invalid signature' },
-      { status: 400 }
-    );
-  }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const md = session.metadata ?? {};
-
-    try {
-      const supabase = getAdminSupabase();
-      const { error } = await supabase.from('bookings').insert({
-        treatment_slug: md.treatmentSlug,
-        treatment_name: md.treatmentName,
-        appointment_at: md.appointmentAt,
-        client_name: md.clientName,
-        client_email: session.customer_email ?? '',
-        client_phone: md.clientPhone,
-        notes: md.notes || null,
-        deposit_amount_inr: Number(md.depositInr || 500),
-        status: 'confirmed',
-        stripe_session_id: session.id
-      });
-
-      if (error) {
-        console.error('[webhook] supabase insert failed', error);
-        // Return 500 so Stripe retries
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
-
-      // Best-effort email — don't fail the webhook if email send fails
-      try {
-        await sendBookingConfirmation({
-          to: session.customer_email ?? '',
-          clientName: md.clientName,
-          treatmentName: md.treatmentName,
-          appointmentAt: md.appointmentAt,
-          depositAmountInr: Number(md.depositInr || 500)
-        });
-      } catch (emailErr) {
-        console.error('[webhook] email send failed', emailErr);
-      }
-    } catch (err) {
-      console.error('[webhook] handler error', err);
-      return NextResponse.json(
-        { error: err instanceof Error ? err.message : 'Webhook handler error' },
-        { status: 500 }
-      );
+    // Verify the webhook signature
+    const isValid = verifyWebhookSignature(signature, rawBody, secret);
+    if (!isValid) {
+      console.error('[webhook] signature verification failed');
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
-  }
 
-  return NextResponse.json({ received: true });
+    const event = JSON.parse(rawBody);
+
+    // Handle payment.authorized event (payment successful)
+    if (event.event === 'payment.authorized' || event.event === 'payment.captured') {
+      const payment = event.payload.payment.entity;
+      const notes = payment.notes || {};
+
+      try {
+        const supabase = getAdminSupabase();
+        const { error } = await supabase.from('bookings').insert({
+          treatment_slug: notes.treatmentSlug,
+          treatment_name: notes.treatmentName,
+          appointment_at: notes.appointmentAt,
+          client_name: notes.clientName,
+          client_email: notes.clientEmail,
+          client_phone: notes.clientPhone,
+          notes: notes.notes || null,
+          deposit_amount_inr: Number(notes.depositInr || 500),
+          status: 'confirmed',
+          razorpay_payment_id: payment.id
+        });
+
+        if (error) {
+          console.error('[webhook] supabase insert failed', error);
+          return NextResponse.json({ error: error.message }, { status: 500 });
+        }
+
+        // Best-effort email — don't fail the webhook if email send fails
+        try {
+          await sendBookingConfirmation({
+            to: notes.clientEmail,
+            clientName: notes.clientName,
+            treatmentName: notes.treatmentName,
+            appointmentAt: notes.appointmentAt,
+            depositAmountInr: Number(notes.depositInr || 500)
+          });
+        } catch (emailErr) {
+          console.error('[webhook] email send failed', emailErr);
+        }
+      } catch (err) {
+        console.error('[webhook] handler error', err);
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : 'Webhook handler error' },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({ received: true });
+  } catch (err) {
+    console.error('[webhook] parse error', err);
+    return NextResponse.json({ error: 'Webhook parse failed' }, { status: 400 });
+  }
 }

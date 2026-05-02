@@ -15,7 +15,7 @@ export function Footer() {
           Visit
         </h4>
         <div>
-          [Clinic address]
+          Green glen layout, Bellandur
           <br />
           Bengaluru
         </div>
@@ -35,7 +35,7 @@ export function Footer() {
           Contact
         </h4>
         <div>
-          +91 [phone]
+          +91 99595 29691
           <br />
           hello@lumiere.clinic
         </div>

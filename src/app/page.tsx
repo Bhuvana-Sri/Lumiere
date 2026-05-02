@@ -30,11 +30,11 @@ const testimonials = [
   }
 ];
 
-const treatmentBgClasses = [
-  'bg-gradient-to-br from-warmtan-200 to-[#D8C5AE]',
-  'bg-gradient-to-br from-sage-50 to-sage-100',
-  'bg-gradient-to-br from-warmtan-400 to-[#B8AB99]',
-  'bg-gradient-to-br from-[#D5C9BB] to-[#C2B6A4]'
+const treatmentImageSrcs = [
+  '/images/botulinumToxin.jpg',
+  '/images/dermalFiller.jpg',
+  '/images/laserResurfacing.jpg',
+  '/images/skinTherapies.jpg'
 ];
 
 export default function HomePage() {
@@ -130,9 +130,13 @@ export default function HomePage() {
             {treatments.map((t, i) => (
               <Reveal key={t.slug} delay={i * 0.08}>
                 <Link href={`/book?treatment=${t.slug}`} className="group block">
-                  <div
-                    className={`aspect-[1/1.15] overflow-hidden transition-transform duration-700 group-hover:scale-[1.02] ${treatmentBgClasses[i]}`}
-                  />
+                  <div className="aspect-[1/1.15] overflow-hidden bg-sage-50">
+                    <ImgWithFallback
+                      src={treatmentImageSrcs[i]}
+                      alt={t.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
+                    />
+                  </div>
                   <h3 className="font-serif text-[19px] md:text-[20px] font-normal mt-4 mb-1">
                     {t.name}
                   </h3>

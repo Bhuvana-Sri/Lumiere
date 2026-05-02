@@ -27,6 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Manrope:wght@300;400;500;600&display=swap"
           rel="stylesheet"
         />
+        <script src="https://checkout.razorpay.com/v1/checkout.js" async defer />
       </head>
       <body>
         <a

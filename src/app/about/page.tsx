@@ -1,8 +1,8 @@
-import Link from 'next/link';
-import { Nav } from '@/components/Nav';
-import { Footer } from '@/components/Footer';
-import { Reveal } from '@/components/Reveal';
-import { ImgWithFallback } from '@/components/ImgWithFallback';
+import Link from "next/link";
+import { Nav } from "@/components/Nav";
+import { Footer } from "@/components/Footer";
+import { Reveal } from "@/components/Reveal";
+import { ImgWithFallback } from "@/components/ImgWithFallback";
 
 export default function AboutPage() {
   return (
@@ -17,11 +17,11 @@ export default function AboutPage() {
               className="relative aspect-[4/5] overflow-hidden"
               style={{
                 background:
-                  'radial-gradient(ellipse at 55% 40%, #C8CDB9 0%, #DCDFD3 70%)'
+                  "radial-gradient(ellipse at 55% 40%, #C8CDB9 0%, #DCDFD3 70%)",
               }}
             >
               <ImgWithFallback
-                src="/images/doctor.jpg"
+                src="/images/hero.jpg"
                 alt="Portrait of the founding surgeon"
                 className="absolute inset-0 w-full h-full object-cover"
               />
@@ -36,10 +36,10 @@ export default function AboutPage() {
               <em className="italic text-sage-600">an artist's restraint.</em>
             </h1>
             <p className="text-[15px] leading-relaxed text-charcoal-500 max-w-[440px]">
-              Lumière is the practice of{' '}
+              Lumière is the practice of{" "}
               <strong className="font-medium text-charcoal-700">
-                Dr. [Friend's Name]
-              </strong>{' '}
+                Dr. Niranjana
+              </strong>{" "}
               — a maxillofacial surgeon turned aesthetic physician, working solo
               by intent.
             </p>
@@ -55,12 +55,12 @@ export default function AboutPage() {
             </p>
             <div className="text-[15px] leading-[1.85] text-charcoal-700 space-y-5">
               <p>
-                Dr. [Friend's Name] began her career in oral and maxillofacial
-                surgery — the surgical specialty that addresses the precise
-                anatomy and reconstructive needs of the face and jaw. The
-                training is long, technical, and unforgiving. It demands a
-                steady hand, an exhaustive understanding of facial structure,
-                and the patience to work in millimetres.
+                Dr. Niranjana began her career in oral and maxillofacial surgery
+                — the surgical specialty that addresses the precise anatomy and
+                reconstructive needs of the face and jaw. The training is long,
+                technical, and unforgiving. It demands a steady hand, an
+                exhaustive understanding of facial structure, and the patience
+                to work in millimetres.
               </p>
               <p>
                 Earlier in her career she practised dentistry and trained in
@@ -80,12 +80,12 @@ export default function AboutPage() {
                 was already there. What changed was the medium.
               </p>
               <p>
-                Today she practises with one principle above all others:{' '}
+                Today she practises with one principle above all others:{" "}
                 <em className="italic text-sage-600">restraint</em>. Her work is
                 defined as much by what she chooses not to do as by what she
                 does. The result is the kind of subtle improvement that no one
-                else can name — only that you look like the calmest,
-                best-rested version of yourself.
+                else can name — only that you look like the calmest, best-rested
+                version of yourself.
               </p>
             </div>
           </Reveal>
@@ -100,16 +100,16 @@ export default function AboutPage() {
               </h2>
               <ul className="space-y-0">
                 {[
-                  ['BDS', 'Bachelor of Dental Surgery', '[Institution]'],
-                  ['MDS', 'Oral & Maxillofacial Surgery', '[Institution]'],
-                  ['FHT', 'Hair Transplantation Fellowship', '[Institution]'],
-                  ['DAAM', 'Advanced Aesthetic Medicine', '[Institution]']
+                  ["BDS", "Bachelor of Dental Surgery", "ITS Dental College"],
+                  ["MDS", "Masters Oral/Maxillofacial Surgery", "ITS Dental College"],
+                  ["FAM", "Fellowship Aesthetic and Clinical Medicine", "Ilacad"],
                 ].map(([deg, title, inst], i, arr) => (
                   <li
                     key={deg}
-                    className={`grid grid-cols-[56px_1fr] gap-4 py-4 ${
-                      i < arr.length - 1 ? 'border-b border-charcoal-700/10' : ''
-                    }`}
+                    className={`grid grid-cols-[56px_1fr] gap-4 py-4 ${i < arr.length - 1
+                      ? "border-b border-charcoal-700/10"
+                      : ""
+                      }`}
                   >
                     <div className="font-serif text-[18px] font-medium text-sage-600 tracking-wide">
                       {deg}
@@ -135,7 +135,7 @@ export default function AboutPage() {
             "My promise to every client is the same — you should look like the
             best, calmest version of yourself. Not someone else."
           </blockquote>
-          <cite className="not-italic smalcap">— Dr. [Friend's Name]</cite>
+          <cite className="not-italic smalcap">— Dr. Niranjana</cite>
         </section>
 
         {/* CTA */}
