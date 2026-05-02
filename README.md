@@ -1,6 +1,6 @@
 # Lumière — Booking + Payment Platform
 
-A website I comissioned for a friend planning to start a clinic. It's a full-stack SaaS booking and payment platform for appointment-based services. Features a public booking interface, admin dashboard, payment processing, and email confirmations.
+Website I comissioned for a friend planning to start a beauty clinic. It's a full-stack SaaS booking and payment platform for appointment-based services. Features a public booking interface, admin dashboard, payment processing, and email confirmations.
 
 ## Features
 
